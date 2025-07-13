@@ -1,0 +1,37 @@
+1. Quản lý người dùng
+
+POST /api/auth/register: Đăng ký tài khoản mới
+POST /api/auth/login: Đăng nhập và lấy token
+GET /api/users/profile: Lấy thông tin cá nhân
+POST /api/users/profile: Cập nhật thông tin cá nhân
+
+2. Danh mục và tìm kiếm
+
+GET /api/categories: Lấy danh sách thể loại
+GET /api/books: Lấy danh sách sách (có thể lọc theo thể loại, tác giả, trạng thái)
+GET /api/books/search: Tìm kiếm sách theo từ khóa
+GET /api/books/trending: Lấy sách đang hot (dựa trên lượt xem)
+
+3. Chi tiết sách và đọc sách
+
+GET /api/books/: Lấy thông tin chi tiết của một cuốn sách
+GET /api/books//chapters: Lấy danh sách các chương của sách
+GET /api/chapters/: Lấy nội dung của một chương
+POST /api/books//views: Tăng lượt xem cho sách
+
+4. Theo dõi tiến độ đọc
+
+GET /api/reading-progress: Lấy danh sách tiến độ đọc của người dùng
+POST /api/reading-progress: Cập nhật tiến độ đọc (khi đọc đến một chương/vị trí mới)
+
+5. Đánh dấu và yêu thích
+
+GET /api/bookmarks: Lấy danh sách đánh dấu trang
+POST /api/bookmarks: Thêm/xóa đánh dấu trang
+GET /api/favorites: Lấy danh sách sách yêu thích
+POST /api/favorites: Thêm/xóa sách khỏi danh sách yêu thích
+
+6. Tác giả
+
+GET /api/authors: Lấy danh sách tác giả
+GET /api/authors/: Lấy thông tin chi tiết và danh sách sách của tác giả

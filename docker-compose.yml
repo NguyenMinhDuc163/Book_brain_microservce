@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  gateway:
+    container_name: api_gateway
+    build:
+      context: ./gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - BOOK_BRAIN_URL=http://book_brain:3000
+      - RECOMMEND_URL=http://recommend:5000
+      - NODE_ENV=production
+    depends_on:
+      - book_brain
+      - recommend
+    networks:
+      - app-network
+
+  book_brain:
+    container_name: book_brain_app
+    build:
+      context: ./book_brain_service
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_HOST=20.255.153.62
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=NguyenDuc@163
+      - DB_NAME=book_brain_db
+      - DB_DIALECT=postgres
+      - NODE_ENV=production
+    networks:
+      - app-network
+
+  recommend:
+    container_name: recommend_service
+    build:
+      context: ./recommend_service
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./recommend_service:/app
+    environment:
+      - FLASK_ENV=development
+      - FLASK_APP=app.py
+      - DB_HOST=20.255.153.62
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=NguyenDuc@163
+      - DB_NAME=book_brain_db
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge 

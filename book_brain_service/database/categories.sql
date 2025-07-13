@@ -1,0 +1,18 @@
+INSERT INTO public.categories (category_id, name, title, url, created_at) VALUES (1, 'Thư Viện Sách', 'Thư Viện Sách', 'https://gacsach.top/thu-vien-sach/top-views', '2025-04-16 07:44:43.057950');
+INSERT INTO public.categories (category_id, name, title, url, created_at) VALUES (2, 'Văn học Việt Nam', 'Văn học Việt Nam', 'https://gacsach.top/thu-vien-sach/van-hoc-viet-nam', '2025-04-16 07:44:43.070284');
+INSERT INTO public.categories (category_id, name, title, url, created_at) VALUES (3, 'Văn học phương Tây', 'Văn học nước ngoài', 'https://gacsach.top/thu-vien-sach/van-hoc-phuong-tay', '2025-04-16 07:44:43.077127');
+INSERT INTO public.categories (category_id, name, title, url, created_at) VALUES (4, 'Ngôn tình Trung Quốc', 'Ngôn tình Trung Quốc', 'https://gacsach.top/thu-vien-sach/ngon-tinh-trung-quoc', '2025-04-16 07:44:43.081312');
+INSERT INTO public.categories (category_id, name, title, url, created_at) VALUES (5, 'Văn học phương Đông', 'Văn học Nhật Bản', 'https://gacsach.top/thu-vien-sach/van-hoc-phuong-dong', '2025-04-16 07:44:43.085443');
+INSERT INTO public.categories (category_id, name, title, url, created_at) VALUES (6, 'Văn học kinh điển', 'Văn học kinh điển', 'https://gacsach.top/thu-vien-sach/van-hoc-kinh-dien', '2025-04-16 07:44:43.088358');
+INSERT INTO public.categories (category_id, name, title, url, created_at) VALUES (7, 'Võ Hiệp', 'Võ Hiệp', 'https://gacsach.top/thu-vien-sach/vo-hiep', '2025-04-16 07:44:43.090819');
+INSERT INTO public.categories (category_id, name, title, url, created_at) VALUES (8, 'Trinh thám', 'Trinh thám', 'https://gacsach.top/thu-vien-sach/trinh-tham', '2025-04-16 07:44:43.093342');
+INSERT INTO public.categories (category_id, name, title, url, created_at) VALUES (9, 'Linh Dị', 'Truyện ma - Kinh dị', 'https://gacsach.top/thu-vien-sach/linh-di', '2025-04-16 07:44:43.096195');
+INSERT INTO public.categories (category_id, name, title, url, created_at) VALUES (10, 'LGBTQ+', 'Tiểu thuyết tình yêu', 'https://gacsach.top/thu-vien-sach/lgbtq', '2025-04-16 07:44:43.098867');
+INSERT INTO public.categories (category_id, name, title, url, created_at) VALUES (11, 'Sách Teen', 'Sách Teen', 'https://gacsach.top/thu-vien-sach/sach-teen', '2025-04-16 07:44:43.101298');
+INSERT INTO public.categories (category_id, name, title, url, created_at) VALUES (12, 'Kỳ Ảo', 'Kỳ Ảo', 'https://gacsach.top/thu-vien-sach/ky-ao', '2025-04-16 07:44:43.103464');
+INSERT INTO public.categories (category_id, name, title, url, created_at) VALUES (13, 'Lịch sử - Hồi ký', 'Lịch sử - Hồi ký', 'https://gacsach.top/thu-vien-sach/lich-su-hoi-ky', '2025-04-16 07:44:43.105758');
+INSERT INTO public.categories (category_id, name, title, url, created_at) VALUES (14, 'Kinh tế', 'Kinh tế', 'https://gacsach.top/thu-vien-sach/kinh-te', '2025-04-16 07:44:43.108238');
+INSERT INTO public.categories (category_id, name, title, url, created_at) VALUES (15, 'Văn hóa - Xã hội', 'Văn hóa - Xã hội', 'https://gacsach.top/thu-vien-sach/van-hoa-xa-hoi', '2025-04-16 07:44:43.110654');
+INSERT INTO public.categories (category_id, name, title, url, created_at) VALUES (16, 'Khoa học - Kĩ thuật', 'Khoa học - Kĩ thuật', 'https://gacsach.top/thu-vien-sach/khoa-hoc-ki-thuat', '2025-04-16 07:44:43.113195');
+INSERT INTO public.categories (category_id, name, title, url, created_at) VALUES (17, 'Kỹ năng sống', 'Kỹ năng sống', 'https://gacsach.top/thu-vien-sach/ky-nang-song', '2025-04-16 07:44:43.116063');
+INSERT INTO public.categories (category_id, name, title, url, created_at) VALUES (18, 'Tâm lí - Giới tính', 'Tâm lí - Giới tính', 'https://gacsach.top/thu-vien-sach/tam-li-gioi-tinh', '2025-04-16 07:44:43.118803');

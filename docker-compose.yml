@@ -22,7 +22,7 @@ services:
     build:
       context: ./book_brain_service
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       - DB_HOST=20.255.153.62
       - DB_PORT=5432

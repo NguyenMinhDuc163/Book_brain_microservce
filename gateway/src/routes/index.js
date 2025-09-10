@@ -26,7 +26,7 @@ const createBookServiceProxy = () => createProxyMiddleware({
     ws: true,
     xfwd: true,
     pathRewrite: {
-        '^/express': '', // Strip /express prefix
+        '^/api/v1/express': '/api/v1', // Rewrite /api/v1/express to /api/v1
     },
     onProxyReq: (proxyReq, req, res) => {
         // Giữ nguyên headers
@@ -72,7 +72,7 @@ const createRecommendationServiceProxy = () => createProxyMiddleware({
     ws: true,
     xfwd: true,
     pathRewrite: {
-        '^/flask': '', // Strip /flask prefix
+        '^/api/v1/flask': '/api/v1', // Rewrite /api/v1/flask to /api/v1
     },
     onProxyReq: (proxyReq, req, res) => {
         // Giữ nguyên headers
@@ -106,11 +106,11 @@ const createRecommendationServiceProxy = () => createProxyMiddleware({
     }
 });
 
-// Route cho Book Service (express prefix)
-router.use('/express', createBookServiceProxy());
+// Route cho Book Service (express suffix)
+router.use('/api/v1/express', createBookServiceProxy());
 
-// Route cho Recommendation Service (flask prefix)  
-router.use('/flask', createRecommendationServiceProxy());
+// Route cho Recommendation Service (flask suffix)  
+router.use('/api/v1/flask', createRecommendationServiceProxy());
 
 // Health check endpoint
 router.get('/health', (req, res) => {
@@ -130,8 +130,8 @@ router.get('/', (req, res) => {
     res.json({
         message: 'API Gateway đang hoạt động',
         endpoints: [
-            { path: '/express/*', description: 'Book Service APIs (Express)' },
-            { path: '/flask/*', description: 'Recommendation Service APIs (Flask)' },
+            { path: '/api/v1/express/*', description: 'Book Service APIs (Express)' },
+            { path: '/api/v1/flask/*', description: 'Recommendation Service APIs (Flask)' },
             { path: '/health', description: 'Kiểm tra trạng thái API Gateway' }
         ],
     });

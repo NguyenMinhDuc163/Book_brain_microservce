@@ -25,6 +25,9 @@ const createBookServiceProxy = () => createProxyMiddleware({
     keepAlive: true,
     ws: true,
     xfwd: true,
+    pathRewrite: {
+        '^/express': '', // Strip /express prefix
+    },
     onProxyReq: (proxyReq, req, res) => {
         // Giữ nguyên headers
         if (req.headers.authorization) {
@@ -68,6 +71,9 @@ const createRecommendationServiceProxy = () => createProxyMiddleware({
     keepAlive: true,
     ws: true,
     xfwd: true,
+    pathRewrite: {
+        '^/flask': '', // Strip /flask prefix
+    },
     onProxyReq: (proxyReq, req, res) => {
         // Giữ nguyên headers
         if (req.headers.authorization) {

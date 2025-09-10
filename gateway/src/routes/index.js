@@ -15,7 +15,7 @@ router.use((req, res, next) => {
 });
 
 // Cấu hình proxy cho Book Service
-const bookServiceProxy = createProxyMiddleware({
+const createBookServiceProxy = () => createProxyMiddleware({
     target: BOOK_SERVICE_URL,
     changeOrigin: true,
     secure: false,
@@ -58,7 +58,7 @@ const bookServiceProxy = createProxyMiddleware({
 });
 
 // Cấu hình proxy cho Recommendation Service
-const recommendationServiceProxy = createProxyMiddleware({
+const createRecommendationServiceProxy = () => createProxyMiddleware({
     target: RECOMMENDATION_SERVICE_URL,
     changeOrigin: true,
     secure: false,
@@ -104,10 +104,10 @@ const recommendationServiceProxy = createProxyMiddleware({
 router.use('/api/v1', (req, res, next) => {
     // Nếu là API của Recommendation Service
     if (req.path.startsWith('/recommendations')) {
-        return recommendationServiceProxy(req, res, next);
+        return createRecommendationServiceProxy()(req, res, next);
     }
     // Các API còn lại đều thuộc Book Service
-    return bookServiceProxy(req, res, next);
+    return createBookServiceProxy()(req, res, next);
 });
 
 // Health check endpoint

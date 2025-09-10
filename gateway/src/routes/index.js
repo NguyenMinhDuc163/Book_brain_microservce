@@ -100,15 +100,11 @@ const createRecommendationServiceProxy = () => createProxyMiddleware({
     }
 });
 
-// Định nghĩa routes cho Book Service - xử lý tất cả các API từ Book Service
-router.use('/api/v1', (req, res, next) => {
-    // Nếu là API của Recommendation Service
-    if (req.path.startsWith('/recommendations')) {
-        return createRecommendationServiceProxy()(req, res, next);
-    }
-    // Các API còn lại đều thuộc Book Service
-    return createBookServiceProxy()(req, res, next);
-});
+// Route cho Book Service (express prefix)
+router.use('/express', createBookServiceProxy());
+
+// Route cho Recommendation Service (flask prefix)  
+router.use('/flask', createRecommendationServiceProxy());
 
 // Health check endpoint
 router.get('/health', (req, res) => {
@@ -128,8 +124,8 @@ router.get('/', (req, res) => {
     res.json({
         message: 'API Gateway đang hoạt động',
         endpoints: [
-            { path: '/api/v1/*', description: 'Book Service APIs' },
-            { path: '/api/v1/recommendations', description: 'Recommendation Service APIs' },
+            { path: '/express/*', description: 'Book Service APIs (Express)' },
+            { path: '/flask/*', description: 'Recommendation Service APIs (Flask)' },
             { path: '/health', description: 'Kiểm tra trạng thái API Gateway' }
         ],
     });

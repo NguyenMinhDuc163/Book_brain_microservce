@@ -1,11 +1,13 @@
 version: '3'
 services:
   web:
-    build: .
+    image: nguyenduc1603/book-brain-ai-service:latest
+    pull_policy: always
+#    build: .
+    env_file:
+      - .env
     ports:
       - "5000:5000"
-    volumes:
-      - .:/app
     environment:
       - FLASK_ENV=development
       - FLASK_APP=app.py

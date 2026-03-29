@@ -6,3 +6,6 @@ dist/
 htmlcov/
 .tox/
 docs/_build/
+.env
+.env.*
+!.env.example

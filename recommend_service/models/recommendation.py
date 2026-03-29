@@ -34,6 +34,12 @@ class BookRecommender:
         self.favorites_df = favorites_df
         self.books_df = books_df
 
+        books_basic = self.books_df[['book_id', 'title', 'category_id', 'author_id']].drop_duplicates(
+            subset=['book_id'],
+            keep='last'
+        )
+        self.book_lookup = books_basic.set_index('book_id').to_dict('index')
+
     def create_user_profile(self, user_id):
         """
         Tạo profile người dùng từ lịch sử đọc, đánh giá và yêu thích
@@ -256,19 +262,14 @@ class BookRecommender:
             values='interaction_score'
         ).fillna(0)
 
-        # Tính độ tương đồng giữa người dùng
-        user_similarity = cosine_similarity(user_book_matrix)
-        user_similarity_df = pd.DataFrame(
-            user_similarity,
-            index=user_book_matrix.index,
-            columns=user_book_matrix.index
-        )
-
         # Lấy người dùng tương tự
-        if user_id not in user_similarity_df.index:
+        if user_id not in user_book_matrix.index:
             return []
 
-        similar_users = user_similarity_df[user_id].sort_values(ascending=False)[1:11]  # 10 người tương tự nhất
+        target_vector = user_book_matrix.loc[[user_id]]
+        similarity_scores = cosine_similarity(target_vector, user_book_matrix)[0]
+        similarity_series = pd.Series(similarity_scores, index=user_book_matrix.index).drop(user_id, errors='ignore')
+        similar_users = similarity_series.sort_values(ascending=False).head(10)
 
         # Lấy sách người dùng đã đọc
         user_books = set(user_book_matrix.loc[user_id][user_book_matrix.loc[user_id] > 0].index)
@@ -294,16 +295,16 @@ class BookRecommender:
         recommendation_list = []
 
         for book_id, score in recommendations.items():
-            book_info = self.books_df[self.books_df['book_id'] == book_id]
-            if len(book_info) > 0:
+            book_info = self.book_lookup.get(book_id)
+            if book_info is None:
+                book_info = self.book_lookup.get(int(book_id))
+            if book_info is not None:
                 recommendation_list.append({
                     'book_id': int(book_id),
-                    'title': book_info['title'].values[0],
+                    'title': book_info['title'],
                     'score': float(score),
-                    'category_id': int(book_info['category_id'].values[0]) if pd.notna(
-                        book_info['category_id'].values[0]) else None,
-                    'author_id': int(book_info['author_id'].values[0]) if pd.notna(
-                        book_info['author_id'].values[0]) else None
+                    'category_id': int(book_info['category_id']) if pd.notna(book_info['category_id']) else None,
+                    'author_id': int(book_info['author_id']) if pd.notna(book_info['author_id']) else None
                 })
 
         recommendation_list.sort(key=lambda x: x['score'], reverse=True)

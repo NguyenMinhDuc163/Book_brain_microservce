@@ -2,11 +2,11 @@ import os
 
 # Cấu hình cơ sở dữ liệu và các tham số ứng dụng
 DB_CONFIG = {
-    'dbname': os.getenv('DB_NAME', 'book_brain_db'),
-    'user': os.getenv('DB_USER', 'postgres'),
-    'password': os.getenv('DB_PASSWORD', 'NguyenDuc@163'),
-    'host': os.getenv('DB_HOST', '20.255.153.62'),
-    'port': os.getenv('DB_PORT', '5432')
+    'dbname': os.environ['DB_NAME'],
+    'user': os.environ['DB_USER'],
+    'password': os.environ['DB_PASSWORD'],
+    'host': os.environ['DB_HOST'],
+    'port': os.environ['DB_PORT']
 }
 
 
@@ -18,7 +18,8 @@ RECOMMENDATION_CONFIG = {
     'popularity_score_weight': 0.3,    # Trọng số chung cho popularity
     'hybrid_content_weight': 0.6,      # Trọng số cho content-based trong hybrid
     'hybrid_collab_weight': 0.4,       # Trọng số cho collaborative trong hybrid
-    'default_limit': 10                # Số lượng sách gợi ý mặc định
+    'default_limit': 10,               # Số lượng sách gợi ý mặc định
+    'cache_ttl_seconds': int(os.getenv('RECOMMENDATION_CACHE_TTL', '120'))
 }
 
 # Trọng số cho các loại tương tác

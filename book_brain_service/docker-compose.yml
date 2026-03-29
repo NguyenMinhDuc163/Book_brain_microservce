@@ -2,36 +2,16 @@ version: '3.8'
 
 services:
   app:
-    container_name: book_brain_app # Tên container ứng dụng
-    image: nguyenduc1603/book_brain:v1.0.1
-#   image: nguyenduc1603/book_brain:v1.0.1 // dung docker hub
-    build:
-      context: .
+    container_name: book_brain_app
+    image: nguyenduc1603/book_brain:latest
+    env_file:
+      - .env
     ports:
-      - "3000:3000" # Map port của ứng dụng ra ngoài
-    environment:
-      - DB_HOST=book_brain_db # Hostname của database (trùng với container_name của PostgreSQL)
-      - DB_PORT=5432
-      - DB_USER=postgres
-      - DB_PASSWORD=NguyenDuc@163
-      - DB_NAME=book_brain_db
-      - DB_DIALECT=postgres
-      - NODE_ENV=production
-    depends_on:
-      - database # Đảm bảo database khởi động trước ứng dụng
+      - "3000:3000"
+    restart: unless-stopped
 
-  database:
-    container_name: book_brain_db # Tên container database
-    image: postgres:latest
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: NguyenDuc@163
-      POSTGRES_DB: book_brain_db
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
+    # Nếu cần test local build thì mở 2 dòng dưới và comment image phía trên
+    # build:
+    #   context: .
 
-volumes:
-  postgres-data:
-    driver: local
+# Database chạy ngoài nên compose này không khởi tạo service database

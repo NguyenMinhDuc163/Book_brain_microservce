@@ -3,14 +3,11 @@ version: '3.8'
 services:
   gateway:
     container_name: api_gateway
-    build:
-      context: ./gateway
+    image: nguyenduc1603/book-brain-gateway:tagname
+    env_file:
+      - ./gateway/.env
     ports:
       - "4000:8080"
-    environment:
-      - BOOK_BRAIN_URL=http://book_brain:3000
-      - RECOMMEND_URL=http://recommend:5000
-      - NODE_ENV=production
     depends_on:
       - book_brain
       - recommend

@@ -5,8 +5,12 @@ const logger = require('../utils/logger');
 const router = express.Router();
 
 // Cấu hình URLs cho các services
-const BOOK_SERVICE_URL = process.env.BOOK_BRAIN_URL || 'http://book_brain:3000';
-const RECOMMENDATION_SERVICE_URL = process.env.RECOMMEND_URL || 'http://recommend:5000';
+const BOOK_SERVICE_URL = process.env.BOOK_BRAIN_URL;
+const RECOMMENDATION_SERVICE_URL = process.env.RECOMMEND_URL;
+
+if (!BOOK_SERVICE_URL || !RECOMMENDATION_SERVICE_URL) {
+    throw new Error('Missing required env vars: BOOK_BRAIN_URL, RECOMMEND_URL');
+}
 
 // Middleware để log request
 router.use((req, res, next) => {

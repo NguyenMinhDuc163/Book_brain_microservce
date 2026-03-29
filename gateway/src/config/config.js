@@ -1,3 +1,10 @@
+const BOOK_BRAIN_URL = process.env.BOOK_BRAIN_URL;
+const RECOMMEND_URL = process.env.RECOMMEND_URL;
+
+if (!BOOK_BRAIN_URL || !RECOMMEND_URL) {
+    throw new Error('Missing required env vars: BOOK_BRAIN_URL, RECOMMEND_URL');
+}
+
 module.exports = {
     server: {
         port: process.env.PORT || 8080,
@@ -5,7 +12,7 @@ module.exports = {
     },
     services: {
         bookService: {
-            url: process.env.BOOK_SERVICE_URL || 'http://localhost:3000',
+            url: BOOK_BRAIN_URL,
             options: {
                 timeout: 10000,
                 retry: {
@@ -18,7 +25,7 @@ module.exports = {
             }
         },
         recommendationService: {
-            url: process.env.RECOMMENDATION_SERVICE_URL || 'http://localhost:5000',
+            url: RECOMMEND_URL,
             options: {
                 timeout: 10000,
                 retry: {

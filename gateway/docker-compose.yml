@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  gateway:
+    container_name: api_gateway
+    image: nguyenduc1603/book-brain-gateway:latest
+    env_file:
+      - .env
+    ports:
+      - "4000:8080"
+    restart: unless-stopped

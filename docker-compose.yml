@@ -3,53 +3,43 @@ version: '3.8'
 services:
   gateway:
     container_name: api_gateway
-    image: nguyenduc1603/book-brain-gateway:tagname
+    image: nguyenduc1603/book-brain-gateway:latest
+    pull_policy: always
     env_file:
-      - ./gateway/.env
+      - .env
     ports:
-      - "4000:8080"
+      - "${GATEWAY_PORT:-4000}:8080"
     depends_on:
       - book_brain
       - recommend
+    restart: unless-stopped
     networks:
       - app-network
 
   book_brain:
     container_name: book_brain_app
-    build:
-      context: ./book_brain_service
-    ports:
-      - "3001:3000"
-    environment:
-      - DB_HOST=20.255.153.62
-      - DB_PORT=5432
-      - DB_USER=postgres
-      - DB_PASSWORD=NguyenDuc@163
-      - DB_NAME=book_brain_db
-      - DB_DIALECT=postgres
-      - NODE_ENV=production
+    image: nguyenduc1603/book_brain:latest
+    pull_policy: always
+    env_file:
+      - .env
+    expose:
+      - "3000"
+    restart: unless-stopped
     networks:
       - app-network
 
   recommend:
     container_name: recommend_service
-    build:
-      context: ./recommend_service
-    ports:
-      - "5000:5000"
-    volumes:
-      - ./recommend_service:/app
-    environment:
-      - FLASK_ENV=development
-      - FLASK_APP=app.py
-      - DB_HOST=20.255.153.62
-      - DB_PORT=5432
-      - DB_USER=postgres
-      - DB_PASSWORD=NguyenDuc@163
-      - DB_NAME=book_brain_db
+    image: nguyenduc1603/book-brain-ai-service:latest
+    pull_policy: always
+    env_file:
+      - .env
+    expose:
+      - "5000"
+    restart: unless-stopped
     networks:
       - app-network
 
 networks:
   app-network:
-    driver: bridge 
+    driver: bridge

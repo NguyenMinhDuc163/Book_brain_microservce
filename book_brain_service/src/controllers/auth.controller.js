@@ -33,6 +33,25 @@ exports.updateUserInfo = async (req, res) => {
     }
 };
 
+// Xóa mềm người dùng
+exports.deleteUser = async (req, res) => {
+    try {
+        // Sử dụng id từ token xác thực nếu có
+        const userId = req.user?.userId || req.body.id;
+
+        const userData = {
+            ...req.body,
+            id: userId
+        };
+
+        const response = await UserService.deleteUser(userData);
+        return res.status(response.status).json(createResponse(response.statusText, response.message, response.status, response.data));
+    } catch (err) {
+        logger.error(`Lỗi khi xóa người dùng: ${err.message}`, { meta: { request: req.body, error: err } });
+        return res.status(200).json(createResponse('fail', 'Lỗi khi xóa người dùng.', 500, [], err.message));
+    }
+};
+
 // Đăng nhập người dùng
 exports.loginUser = async (req, res) => {
     try {

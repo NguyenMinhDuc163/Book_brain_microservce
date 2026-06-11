@@ -21,4 +21,7 @@ router.post('/api/v1/auth/reset_password', authController.resetPassword);
 
 // Route cập nhật thông tin người dùng
 router.post('/api/v1/auth/update', authController.updateUserInfo);
+
+// Route xóa mềm người dùng
+router.post('/api/v1/auth/delete', authController.deleteUser);
 module.exports = router;

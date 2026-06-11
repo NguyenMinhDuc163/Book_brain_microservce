@@ -40,6 +40,10 @@ class UserService {
             throw new Error('Người dùng không tồn tại.');
         }
 
+        if (user.is_verified === true) {
+            throw new Error('Tài khoản của bạn đã bị khóa vui lòng liên hệ ngminhduc1603@gmail.com để giải quyết.');
+        }
+
         const isPasswordValid = await bcrypt.compare(data.password, user.password);
         if (!isPasswordValid) {
             throw new Error('Mật khẩu không chính xác.');
@@ -99,6 +103,30 @@ class UserService {
             data: [updatedUser]
         };
     }
+
+    // Xóa mềm người dùng
+    static async deleteUser(data) {
+        const { id } = data;
+
+        if (!id) {
+            throw new Error('ID người dùng là bắt buộc.');
+        }
+
+        const existingUser = await UserModel.findById(id);
+        if (!existingUser) {
+            throw new Error('Người dùng không tồn tại.');
+        }
+
+        const deletedUser = await UserModel.deleteUser(id);
+
+        return {
+            status: 200,
+            statusText: 'success',
+            message: 'Tài khoản người dùng đã được xóa thành công.',
+            data: [deletedUser]
+        };
+    }
+
     // Đổi mật khẩu người dùng
     static async changePassword(data) {
         const { id, oldPassword, newPassword } = data;

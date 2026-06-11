@@ -81,6 +81,20 @@ class UserModel {
         return result.rows[0];
     }
 
+    // Xóa mềm người dùng bằng cách khóa tài khoản
+    static async deleteUser(userId) {
+        const query = `
+            UPDATE users
+            SET
+                is_verified = true,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = $1
+            RETURNING id, username, email, is_verified, updated_at;
+        `;
+        const result = await pool.query(query, [userId]);
+        return result.rows[0];
+    }
+
 }
 
 

@@ -13,9 +13,6 @@ RUN npm install
 # Sao chép toàn bộ mã nguồn của ứng dụng vào container
 COPY . .
 
-# Sao chép tệp .env vào container
-COPY .env .env
-
 # Thiết lập biến môi trường cho Node.js
 ENV NODE_ENV=production
 

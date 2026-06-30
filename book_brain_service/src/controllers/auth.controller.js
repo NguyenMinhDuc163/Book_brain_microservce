@@ -2,14 +2,18 @@ const { createResponse } = require('../utils/responseHelper');
 const { logger } = require('../utils/logger');
 const UserService = require('../services/user.service'); // Dịch vụ xử lý logic
 
+const errorResponse = (res, status, message) =>
+    res.status(status).json(createResponse('fail', message, status, []));
+
 // Đăng ký người dùng
 exports.registerUser = async (req, res) => {
     try {
         const response = await UserService.registerUser(req.body);
         return res.status(response.status).json(createResponse(response.statusText, response.message, response.status, response.data));
     } catch (err) {
-        logger.error(`Lỗi khi đăng ký người dùng: ${err.message}`, { meta: { request: req.body, error: err } });
-        return res.status(200).json(createResponse('fail', 'Lỗi khi đăng ký người dùng.', 500, [], err.message));
+        logger.warn(`Đăng ký không thành công: ${err.message}`);
+        const status = err.message === 'Email đã được sử dụng.' ? 409 : 400;
+        return errorResponse(res, status, err.message);
     }
 };
 
@@ -17,7 +21,7 @@ exports.registerUser = async (req, res) => {
 exports.updateUserInfo = async (req, res) => {
     try {
         // Sử dụng id từ token xác thực nếu có
-        const userId = req.user?.userId || req.body.id;
+        const userId = req.user.userId;
 
         // Tạo object dữ liệu mới kèm theo userId
         const userData = {
@@ -28,8 +32,8 @@ exports.updateUserInfo = async (req, res) => {
         const response = await UserService.updateUserInfo(userData);
         return res.status(response.status).json(createResponse(response.statusText, response.message, response.status, response.data));
     } catch (err) {
-        logger.error(`Lỗi khi cập nhật thông tin người dùng: ${err.message}`, { meta: { request: req.body, error: err } });
-        return res.status(200).json(createResponse('fail', 'Lỗi khi cập nhật thông tin người dùng.', 500, [], err.message));
+        logger.warn(`Cập nhật tài khoản không thành công: ${err.message}`);
+        return errorResponse(res, 400, err.message);
     }
 };
 
@@ -37,7 +41,7 @@ exports.updateUserInfo = async (req, res) => {
 exports.deleteUser = async (req, res) => {
     try {
         // Sử dụng id từ token xác thực nếu có
-        const userId = req.user?.userId || req.body.id;
+        const userId = req.user.userId;
 
         const userData = {
             ...req.body,
@@ -47,8 +51,8 @@ exports.deleteUser = async (req, res) => {
         const response = await UserService.deleteUser(userData);
         return res.status(response.status).json(createResponse(response.statusText, response.message, response.status, response.data));
     } catch (err) {
-        logger.error(`Lỗi khi xóa người dùng: ${err.message}`, { meta: { request: req.body, error: err } });
-        return res.status(200).json(createResponse('fail', 'Lỗi khi xóa người dùng.', 500, [], err.message));
+        logger.error(`Lỗi khi xóa người dùng: ${err.message}`);
+        return errorResponse(res, 500, 'Không thể xóa tài khoản.');
     }
 };
 
@@ -58,19 +62,19 @@ exports.loginUser = async (req, res) => {
         const response = await UserService.loginUser(req.body);
         return res.status(response.status).json(createResponse(response.statusText, response.message, response.status, response.data));
     } catch (err) {
-        logger.error(`Lỗi khi đăng nhập: ${err.message}`, { meta: { request: req.body, error: err } });
-        return res.status(200).json(createResponse('fail', 'Lỗi khi đăng nhập.', 500, [], err.message));
+        logger.warn(`Đăng nhập không thành công: ${err.message}`);
+        return errorResponse(res, 401, 'Email hoặc mật khẩu không chính xác.');
     }
 };
 
 // Đổi mật khẩu người dùng
 exports.changePassword = async (req, res) => {
     try {
-        const response = await UserService.changePassword(req.body);
+        const response = await UserService.changePassword({ ...req.body, id: req.user.userId });
         return res.status(response.status).json(createResponse(response.statusText, response.message, response.status, response.data));
     } catch (err) {
-        logger.error(`Lỗi khi đổi mật khẩu: ${err.message}`, { meta: { request: req.body, error: err } });
-        return res.status(200).json(createResponse('fail', 'Lỗi khi đổi mật khẩu.', 500, [], err.message));
+        logger.warn(`Đổi mật khẩu không thành công: ${err.message}`);
+        return errorResponse(res, 400, err.message);
     }
 };
 
@@ -80,8 +84,14 @@ exports.requestForgotPassword = async (req, res) => {
         const response = await UserService.requestForgotPassword(req.body);
         return res.status(response.status).json(createResponse(response.statusText, response.message, response.status, response.data));
     } catch (err) {
-        logger.error(`Lỗi khi yêu cầu reset mật khẩu: ${err.message}`);
-        return res.status(200).json(createResponse('fail', 'Lỗi server.', 500));
+        // Keep the same response for existing and unknown email addresses.
+        logger.warn('Yêu cầu reset mật khẩu không thể xử lý.');
+        return res.status(200).json(createResponse(
+            'success',
+            'Nếu email tồn tại, hướng dẫn đặt lại mật khẩu sẽ được gửi.',
+            200,
+            []
+        ));
     }
 };
 
@@ -91,7 +101,7 @@ exports.resetPassword = async (req, res) => {
         const response = await UserService.resetPassword(req.body, req.headers['authorization']);
         return res.status(response.status).json(createResponse(response.statusText, response.message, response.status, response.data));
     } catch (err) {
-        logger.error(`Lỗi khi đặt lại mật khẩu: ${err.message}`, { meta: { request: req.body } });
-        return res.status(200).json(createResponse('fail', 'Lỗi server.', 500, null, err.message));
+        logger.warn(`Đặt lại mật khẩu không thành công: ${err.message}`);
+        return errorResponse(res, 400, 'Không thể đặt lại mật khẩu.');
     }
 };

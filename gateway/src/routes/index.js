@@ -56,7 +56,7 @@ const bookServiceProxy = createProxyMiddleware({
             code: 503,
             status: false,
             message: 'Book Service không khả dụng',
-            error: err.message
+            error: ''
         });
     }
 });
@@ -99,7 +99,7 @@ const recommendationServiceProxy = createProxyMiddleware({
             code: 503,
             status: false,
             message: 'Recommendation Service không khả dụng',
-            error: err.message
+            error: ''
         });
     }
 });

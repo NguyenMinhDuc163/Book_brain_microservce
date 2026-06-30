@@ -2,11 +2,14 @@ const express = require('express');
 
 require('dotenv').config();
 const app = express();
+
+// Requests arrive through the controlled API Gateway, so use its forwarded IP
+// for anonymous rate limiting rather than treating all users as one container.
+app.set('trust proxy', 1);
 const cors = require('cors');
 const authRouter = require('./routes/auth.router'); // Route công khai
 const categoryRouter = require('./routes/category.router');
 const { logMiddleware } = require('./utils/logger');
-const { authenticateJWT } = require('./middleware/authMiddleware'); // Middleware xác thực JWT
 const bookRouter = require('./routes/book.router');
 const reviewRouter = require('./routes/review.router');
 const favoriteRouter = require('./routes/favorite.router');
@@ -27,22 +30,6 @@ app.use(cors({
     allowedHeaders: 'Content-Type,Authorization', // Các header được phép
 }));
 
-// Middleware xác thực JWT cho toàn bộ route, trừ route công khai
-app.use((req, res, next) => {
-    const publicRoutes = [
-        '/api/v1/auth/login',
-        '/api/v1/auth/register',
-        '/api/v1/auth/forgot_password',
-        '/'
-    ]; // Danh sách các route công khai
-
-    if (publicRoutes.includes(req.path)) {
-        return next(); // Bỏ qua xác thực nếu là route công khai
-    }
-
-    authenticateJWT(req, res, next); // Thực hiện xác thực JWT
-});
-
 // app.get('/favicon.ico', (req, res) => {
 //     res.status(204).send(); // Trả về mã 204 nếu không có favicon
 // });
@@ -61,7 +48,7 @@ app.use(rankingRouter);
 app.use(bookNoteRouter);
 
 app.use((req, res, next) => {
-    res.status(200).json({
+    res.status(404).json({
         code: 404,
         status: 'fail',
         message: 'API endpoint not found',

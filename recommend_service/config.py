@@ -9,6 +9,8 @@ DB_CONFIG = {
     'port': os.environ['DB_PORT']
 }
 
+JWT_SECRET = os.environ['JWT_SECRET']
+
 
 # Tham số cài đặt cho hệ thống gợi ý
 RECOMMENDATION_CONFIG = {

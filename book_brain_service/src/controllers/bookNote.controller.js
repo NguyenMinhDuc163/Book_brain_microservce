@@ -8,7 +8,7 @@ class BookNoteController {
 
             const note = await bookNoteService.createNote(userId, noteData);
 
-            res.status(200).json({
+            res.status(201).json({
                 code: 201,
                 data: [note],
                 status: 'success',
@@ -16,12 +16,12 @@ class BookNoteController {
                 error: ''
             });
         } catch (error) {
-            res.status(200).json({
+            res.status(500).json({
                 code: 500,
                 data: [],
                 status: 'error',
-                message: error.message,
-                error: error.message
+                message: 'Không thể tạo ghi chú',
+                error: ''
             });
         }
     }
@@ -41,12 +41,12 @@ class BookNoteController {
                 error: ''
             });
         } catch (error) {
-            res.status(200).json({
+            res.status(500).json({
                 code: 500,
                 data: [],
                 status: 'error',
-                message: error.message,
-                error: error.message
+                message: 'Không thể lấy danh sách ghi chú',
+                error: ''
             });
         }
     }
@@ -57,7 +57,7 @@ class BookNoteController {
             const { noteId } = req.body;
 
             if (!noteId) {
-                return res.status(200).json({
+                return res.status(400).json({
                     code: 400,
                     data: [],
                     status: 'error',
@@ -76,15 +76,15 @@ class BookNoteController {
                 error: ''
             });
         } catch (error) {
-            res.status(200).json({
+            res.status(500).json({
                 code: 500,
                 data: [],
                 status: 'error',
-                message: error.message,
-                error: error.message
+                message: 'Không thể xóa ghi chú',
+                error: ''
             });
         }
     }
 }
 
-module.exports = new BookNoteController(); 
+module.exports = new BookNoteController();

@@ -4,8 +4,4 @@
 node_modules
 npm-debug.log
 logs
-test
-Dockerfile
-.dockerignore
 .git
-.gitignore

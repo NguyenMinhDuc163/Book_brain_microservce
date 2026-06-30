@@ -18,7 +18,15 @@ class UserService {
         }
 
         const hashedPassword = await bcrypt.hash(data.password, 10);
-        const newUser = await UserModel.register({ ...data, password: hashedPassword });
+        const normalizedData = {
+            ...data,
+            password: hashedPassword,
+            phone_number: data.phone_number === '0987654321' || !data.phone_number ? null : data.phone_number,
+            token_fcm: data.token_fcm || null,
+            click_send_name: data.click_send_name || null,
+            click_send_key: data.click_send_key || null
+        };
+        const newUser = await UserModel.register(normalizedData);
 
         return {
             status: 201,
@@ -91,9 +99,9 @@ class UserService {
         const updatedUser = await UserModel.updateUser(id, {
             username,
             email,
-            phone_number,
-            click_send_name,
-            click_send_key
+            phone_number: phone_number === '0987654321' ? undefined : phone_number,
+            click_send_name: click_send_name || undefined,
+            click_send_key: click_send_key || undefined
         });
 
         return {
@@ -117,7 +125,10 @@ class UserService {
             throw new Error('Người dùng không tồn tại.');
         }
 
-        const deletedUser = await UserModel.deleteUser(id);
+        // Account deletion removes credentials and personal profile fields while
+        // retaining only an anonymous row needed by historical foreign keys.
+        const unusablePassword = await bcrypt.hash(`${id}:${Date.now()}:${Math.random()}`, 10);
+        const deletedUser = await UserModel.deleteUser(id, unusablePassword);
 
         return {
             status: 200,

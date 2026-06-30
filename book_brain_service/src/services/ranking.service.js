@@ -21,7 +21,15 @@ const getBookRankings = async (limit = 10) => {
         `;
 
         const result = await pool.query(query, [limit]);
-        return result.rows;
+        return result.rows.map((row) => ({
+            ...row,
+            rating: row.rating === null || row.rating === undefined ? null : String(row.rating),
+            ranking_score: String(row.ranking_score || 0),
+            overall_rank: String(row.overall_rank || 0),
+            favorite_count: String(row.favorite_count || 0),
+            avg_rating: row.avg_rating === null || row.avg_rating === undefined ? '0.0' : String(row.avg_rating),
+            review_count: String(row.review_count || 0)
+        }));
     } catch (error) {
         logger.error(`Lỗi khi lấy bảng xếp hạng sách: ${error.message}`);
         throw error;
@@ -52,7 +60,15 @@ const getAuthorRankings = async (limit = 10) => {
         `;
 
         const result = await pool.query(query, [limit]);
-        return result.rows;
+        return result.rows.map((row) => ({
+            ...row,
+            total_books: String(row.total_books || 0),
+            total_views: String(row.total_views || 0),
+            avg_rating: row.avg_rating === null || row.avg_rating === undefined ? '0.0' : String(row.avg_rating),
+            total_favorites: String(row.total_favorites || 0),
+            author_score: String(row.author_score || 0),
+            overall_rank: String(row.overall_rank || 0)
+        }));
     } catch (error) {
         logger.error(`Lỗi khi lấy danh sách tác giả xếp hạng cao: ${error.message}`);
         throw error;

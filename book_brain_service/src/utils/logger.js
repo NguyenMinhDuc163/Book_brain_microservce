@@ -1,11 +1,34 @@
 const { createLogger, format, transports } = require('winston');
 const { combine, timestamp, printf, colorize } = format;
 const pool = require('../configs/db.config');
-const {body} = require("express-validator");
+const SENSITIVE_KEYS = new Set([
+    'authorization', 'password', 'oldpassword', 'newpassword',
+    'token', 'token_fcm', 'click_send_key'
+]);
+
+const redactSensitive = (value) => {
+    if (Array.isArray(value)) return value.map(redactSensitive);
+    if (!value || typeof value !== 'object') return value;
+
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [
+        key,
+        SENSITIVE_KEYS.has(key.toLowerCase()) ? '[REDACTED]' : redactSensitive(item)
+    ]));
+};
+
+const parseResponseBody = (body) => {
+    if (!body) return null;
+    if (typeof body !== 'string') return body;
+    try {
+        return JSON.parse(body);
+    } catch (_) {
+        return body;
+    }
+};
 
 // Hàm lọc ra những headers quan trọng
 const filterHeaders = (headers) => {
-    const allowedHeaders = ['authorization', 'content-type'];  // Chỉ giữ lại các header quan trọng
+    const allowedHeaders = ['content-type'];
     let filteredHeaders = {};
     allowedHeaders.forEach(header => {
         if (headers[header]) {
@@ -59,8 +82,8 @@ const saveLogToDB = async (level, message, req, res) => {
         req.method,                                      // Phương thức HTTP (GET, POST, etc.)
         req.originalUrl,                                 // URL được gọi
         JSON.stringify(filterHeaders(req.headers)),      // Chỉ lưu các headers quan trọng
-        JSON.stringify(req.body),                        // Body của request dưới dạng JSON
-        res.body ? JSON.stringify(res.body) : null       // Kiểm tra trước khi lưu body
+        JSON.stringify(redactSensitive(req.body)),
+        res.body ? JSON.stringify(redactSensitive(parseResponseBody(res.body))) : null
     ];
     try {
         await pool.query(query, values);
@@ -84,7 +107,7 @@ const logMiddleware = (req, res, next) => {
                 method: req.method,
                 url: req.originalUrl,
                 headers: req.headers, // Headers đầy đủ, sẽ được lọc khi in ra console và database
-                body: req.body,
+                body: redactSensitive(req.body),
             },
             response: {
                 statusCode: res.statusCode,
@@ -96,14 +119,16 @@ const logMiddleware = (req, res, next) => {
         // Kiểm tra và parse body nếu là JSON hợp lệ
         try {
             if (res.body) {
-                meta.response.body = JSON.parse(res.body);
+                meta.response.body = redactSensitive(JSON.parse(res.body));
             }
         } catch (err) {
             console.warn('Không thể parse response body:', err.message);
         }
 
         logger.info(message, { meta }); // Log đơn giản ra console
-        saveLogToDB('info', message, req, res); // Lưu đầy đủ thông tin đã lọc vào database
+        if (process.env.NODE_ENV !== 'test') {
+            saveLogToDB('info', message, req, res);
+        }
     });
 
     next();
@@ -112,4 +137,5 @@ const logMiddleware = (req, res, next) => {
 module.exports = {
     logger,
     logMiddleware,
+    redactSensitive
 };

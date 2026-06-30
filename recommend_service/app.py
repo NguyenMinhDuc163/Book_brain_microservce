@@ -1,8 +1,10 @@
-from flask import Flask, request
+from flask import Flask, g, request
 from flask_cors import CORS
 import time
+from functools import wraps
+import jwt
 
-from config import RECOMMENDATION_CONFIG
+from config import JWT_SECRET, RECOMMENDATION_CONFIG
 from utils.response_utils import standardize_response
 from services.db_service import fetch_user_data, fetch_book_data, get_book_details
 from models.recommendation import BookRecommender
@@ -18,6 +20,41 @@ _recommender_cache = {
     'books_df': None,
     'recommender': None
 }
+
+
+def require_auth(handler):
+    @wraps(handler)
+    def wrapped(*args, **kwargs):
+        authorization = (request.headers.get('Authorization') or '').strip()
+        parts = authorization.split(None, 1)
+
+        if len(parts) != 2 or parts[0].lower() != 'bearer':
+            return {
+                'code': 401, 'data': [], 'status': 'error',
+                'message': 'Unauthorized', 'error': ''
+            }, 401
+
+        token = parts[1].strip()
+        if not token or token.lower() in ('null', 'undefined'):
+            return {
+                'code': 401, 'data': [], 'status': 'error',
+                'message': 'Unauthorized', 'error': ''
+            }, 401
+
+        try:
+            decoded = jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
+            user_id = decoded.get('userId')
+            if not isinstance(user_id, int) or user_id <= 0:
+                raise jwt.InvalidTokenError('Missing user identity')
+            g.auth_user_id = user_id
+        except jwt.PyJWTError:
+            return {
+                'code': 401, 'data': [], 'status': 'error',
+                'message': 'Unauthorized', 'error': ''
+            }, 401
+
+        return handler(*args, **kwargs)
+    return wrapped
 
 
 def _get_cached_recommender():
@@ -56,19 +93,14 @@ def index():
     )
 
 @app.route('/api/v1/recommendations', methods=['GET'])
+@require_auth
 def get_recommendations():
     """API endpoint để lấy đề xuất sách cho người dùng"""
-    user_id = request.args.get('user_id', type=int)
+    # Ownership always comes from the verified token. The legacy query value is
+    # accepted but deliberately ignored for Flutter backward compatibility.
+    user_id = g.auth_user_id
     limit = request.args.get('limit', default=RECOMMENDATION_CONFIG['default_limit'], type=int)
-
-    if not user_id:
-        return {
-            "code": 400,
-            "data": [],
-            "status": "error",
-            "message": "Thiếu thông tin user_id",
-            "error": "Missing user_id parameter"
-        }
+    limit = min(max(limit or RECOMMENDATION_CONFIG['default_limit'], 1), 100)
 
     try:
         # Lấy dữ liệu cần thiết từ cache TTL
@@ -99,7 +131,7 @@ def get_recommendations():
             "status": "success",
             "message": "Danh sách sách hot đã được truy xuất thành công.",
             "error": ""
-        }
+        }, 200
 
     except Exception as e:
         return {
@@ -107,8 +139,8 @@ def get_recommendations():
             "data": [],
             "status": "error",
             "message": "Lỗi khi lấy gợi ý sách",
-            "error": str(e)
-        }
+            "error": ""
+        }, 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

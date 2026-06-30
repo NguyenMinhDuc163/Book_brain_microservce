@@ -1,14 +1,14 @@
 const { createResponse } = require('../utils/responseHelper');
 const { logger } = require('../utils/logger');
 const notificationService = require('../services/notification.service');
+const { parsePagination, parseTemporaryBoolean } = require('../utils/requestValidation');
 
 // Lấy danh sách thông báo của người dùng hiện tại
 exports.getUserNotifications = async (req, res) => {
     try {
         const userId = req.user.userId;
-        const limit = req.query.limit ? parseInt(req.query.limit) : 10;
-        const page = req.query.page ? parseInt(req.query.page) : 1;
-        const unreadOnly = req.query.unread_only === 'true';
+        const { page, limit } = parsePagination(req.query);
+        const unreadOnly = parseTemporaryBoolean(req.query.unread_only, false);
 
         const notifications = await notificationService.getUserNotifications(userId, page, limit, unreadOnly);
 
@@ -21,7 +21,7 @@ exports.getUserNotifications = async (req, res) => {
         }
     } catch (err) {
         logger.error(`Lỗi khi lấy danh sách thông báo: ${err.message}`, { meta: { error: err } });
-        res.status(200).json(createResponse('fail', 'Lỗi khi lấy danh sách thông báo.', 500, [], err.message));
+        res.status(500).json(createResponse('fail', 'Lỗi khi lấy danh sách thông báo.', 500, []));
     }
 };
 
@@ -33,7 +33,7 @@ exports.handleNotification = async (req, res) => {
 
         if (!action) {
             logger.warn('Thiếu tham số action.');
-            return res.status(200).json(createResponse('fail', 'Vui lòng cung cấp tham số action.', 400, []));
+            return res.status(400).json(createResponse('fail', 'Vui lòng cung cấp tham số action.', 400, []));
         }
 
         let result;
@@ -43,7 +43,7 @@ exports.handleNotification = async (req, res) => {
                 // Thêm thông báo mới
                 if (!book_id || !title || !message) {
                     logger.warn('Thiếu thông tin thông báo.');
-                    return res.status(200).json(createResponse('fail', 'Vui lòng cung cấp đầy đủ thông tin thông báo.', 400, []));
+                    return res.status(400).json(createResponse('fail', 'Vui lòng cung cấp đầy đủ thông tin thông báo.', 400, []));
                 }
                 result = await notificationService.addNotification(userId, book_id, chapter_id, title, message);
                 logger.info(`Đã thêm thông báo mới cho người dùng ID: ${userId}`);
@@ -53,7 +53,7 @@ exports.handleNotification = async (req, res) => {
                 // Đánh dấu thông báo đã đọc
                 if (!notification_id) {
                     logger.warn('Thiếu ID thông báo.');
-                    return res.status(200).json(createResponse('fail', 'Vui lòng cung cấp ID thông báo.', 400, []));
+                    return res.status(400).json(createResponse('fail', 'Vui lòng cung cấp ID thông báo.', 400, []));
                 }
                 result = await notificationService.markAsRead(userId, notification_id);
                 if (result) {
@@ -61,7 +61,7 @@ exports.handleNotification = async (req, res) => {
                     return res.status(200).json(createResponse('success', 'Đã đánh dấu thông báo là đã đọc.', 200, [result]));
                 } else {
                     logger.warn(`Không tìm thấy thông báo ID: ${notification_id} cho người dùng ID: ${userId}`);
-                    return res.status(200).json(createResponse('fail', 'Không tìm thấy thông báo.', 404, []));
+                    return res.status(404).json(createResponse('fail', 'Không tìm thấy thông báo.', 404, []));
                 }
 
             case 'mark_all_read':
@@ -74,7 +74,7 @@ exports.handleNotification = async (req, res) => {
                 // Xóa một thông báo
                 if (!notification_id) {
                     logger.warn('Thiếu ID thông báo.');
-                    return res.status(200).json(createResponse('fail', 'Vui lòng cung cấp ID thông báo.', 400, []));
+                    return res.status(400).json(createResponse('fail', 'Vui lòng cung cấp ID thông báo.', 400, []));
                 }
                 result = await notificationService.deleteNotification(userId, notification_id);
                 if (result) {
@@ -82,7 +82,7 @@ exports.handleNotification = async (req, res) => {
                     return res.status(200).json(createResponse('success', 'Đã xóa thông báo thành công.', 200, [result]));
                 } else {
                     logger.warn(`Không tìm thấy thông báo ID: ${notification_id} cho người dùng ID: ${userId}`);
-                    return res.status(200).json(createResponse('fail', 'Không tìm thấy thông báo.', 404, []));
+                    return res.status(404).json(createResponse('fail', 'Không tìm thấy thông báo.', 404, []));
                 }
 
             case 'delete_all':
@@ -93,10 +93,10 @@ exports.handleNotification = async (req, res) => {
 
             default:
                 logger.warn(`Action không hợp lệ: ${action}`);
-                return res.status(200).json(createResponse('fail', 'Action không hợp lệ.', 400, []));
+                return res.status(400).json(createResponse('fail', 'Action không hợp lệ.', 400, []));
         }
     } catch (err) {
         logger.error(`Lỗi khi xử lý thông báo: ${err.message}`, { meta: { request: req.body, error: err } });
-        res.status(200).json(createResponse('fail', 'Lỗi khi xử lý thông báo.', 500, [], err.message));
+        res.status(500).json(createResponse('fail', 'Lỗi khi xử lý thông báo.', 500, []));
     }
 };

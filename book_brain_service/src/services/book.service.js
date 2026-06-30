@@ -107,7 +107,7 @@ const getChaptersByBookId = async (bookId) => {
 };
 
 
-const getBookDetail = async (bookId, chapterOrder = null, userId) => {
+const getBookDetail = async (bookId, chapterOrder = null, userId = null) => {
     // Phần code lấy thông tin sách vẫn giữ nguyên
     const bookQuery = `
         SELECT b.book_id, b.title, b.url, b.image_url, b.excerpt, b.views, b.status, b.rating,
@@ -166,22 +166,25 @@ const getBookDetail = async (bookId, chapterOrder = null, userId) => {
         }
     }
 
-    // Kiểm tra trạng thái yêu thích và theo dõi
-    // Kiểm tra sách có được theo dõi không
-    const subscriptionQuery = `
-        SELECT is_active FROM book_subscriptions 
-        WHERE user_id = $1 AND book_id = $2
-    `;
-    const subscriptionResult = await pool.query(subscriptionQuery, [userId, bookId]);
-    const isSubscribed = subscriptionResult.rows.length > 0 && subscriptionResult.rows[0].is_active;
+    let isSubscribed = false;
+    let isFavorited = false;
 
-    // Kiểm tra sách có trong danh sách yêu thích không
-    const favoriteQuery = `
-        SELECT 1 FROM user_favorites 
-        WHERE id = $1 AND book_id = $2
-    `;
-    const favoriteResult = await pool.query(favoriteQuery, [userId, bookId]);
-    const isFavorited = favoriteResult.rows.length > 0;
+    // Guest responses contain public data only. Authenticated flags are queried
+    // separately so they can never leak through a shared public cache.
+    if (userId) {
+        const [subscriptionResult, favoriteResult] = await Promise.all([
+            pool.query(`
+                SELECT 1 FROM book_subscriptions
+                WHERE user_id = $1 AND book_id = $2 AND is_active = true
+            `, [userId, bookId]),
+            pool.query(`
+                SELECT 1 FROM user_favorites
+                WHERE id = $1 AND book_id = $2
+            `, [userId, bookId])
+        ]);
+        isSubscribed = subscriptionResult.rows.length > 0;
+        isFavorited = favoriteResult.rows.length > 0;
+    }
 
     // Trả về thông tin sách kết hợp với danh sách chương và nội dung chương được chỉ định
     return {

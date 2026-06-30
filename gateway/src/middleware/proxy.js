@@ -61,9 +61,9 @@ module.exports = (serviceUrl, options = {}) => {
 
 
             logger.debug(`Proxy request từ ${req.method} ${req.originalUrl} đến ${serviceUrl}${proxyReq.path}`);
-            logger.debug(`Request headers: ${JSON.stringify(proxyReq.getHeaders())}`);
+            logger.debug('Proxy request headers prepared');
             if (req.body) {
-                logger.debug(`Request body: ${JSON.stringify(req.body)}`);
+                logger.debug('Proxy request contains a body');
             }
         },
         onProxyRes: (proxyRes, req, res) => {

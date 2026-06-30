@@ -82,17 +82,50 @@ class UserModel {
     }
 
     // Xóa mềm người dùng bằng cách khóa tài khoản
-    static async deleteUser(userId) {
+    static async deleteUser(userId, unusablePassword) {
+        const client = await pool.connect();
         const query = `
             UPDATE users
             SET
                 is_verified = true,
+                username = $2,
+                email = $3,
+                password = $4,
+                token_fcm = NULL,
+                phone_number = NULL,
+                click_send_name = NULL,
+                click_send_key = NULL,
+                avatar_url = 'default-avatar.png',
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = $1
             RETURNING id, username, email, is_verified, updated_at;
         `;
-        const result = await pool.query(query, [userId]);
-        return result.rows[0];
+        const anonymousUsername = `deleted_user_${userId}`;
+        const anonymousEmail = `deleted_${userId}_${Date.now()}@deleted.invalid`;
+        try {
+            await client.query('BEGIN');
+
+            // Remove all private/account-scoped content. Reviews are also removed
+            // so user-authored text is not retained after account deletion.
+            await client.query('DELETE FROM review_votes WHERE review_id IN (SELECT review_id FROM book_reviews WHERE user_id = $1)', [userId]);
+            await client.query('DELETE FROM book_reviews WHERE user_id = $1', [userId]);
+            await client.query('DELETE FROM book_notes WHERE user_id = $1', [userId]);
+            await client.query('DELETE FROM notifications WHERE user_id = $1', [userId]);
+            await client.query('DELETE FROM book_subscriptions WHERE user_id = $1', [userId]);
+            await client.query('DELETE FROM reading_history WHERE user_id = $1', [userId]);
+            await client.query('DELETE FROM user_reading_progress WHERE id = $1', [userId]);
+            await client.query('DELETE FROM bookmarks WHERE id = $1', [userId]);
+            await client.query('DELETE FROM user_favorites WHERE id = $1', [userId]);
+
+            const result = await client.query(query, [userId, anonymousUsername, anonymousEmail, unusablePassword]);
+            await client.query('COMMIT');
+            return result.rows[0];
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
     }
 
 }

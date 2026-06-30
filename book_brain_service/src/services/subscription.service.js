@@ -16,7 +16,7 @@ const getUserSubscriptions = async (userId, page = 1, limit = 10, activeOnly = f
                      JOIN books b ON bs.book_id = b.book_id
                      LEFT JOIN authors a ON b.author_id = a.author_id
                      LEFT JOIN categories c ON b.category_id = c.category_id
-            WHERE bs.user_id = $1 and bs.is_active = true
+            WHERE bs.user_id = $1
         `;
 
         const queryParams = [userId];

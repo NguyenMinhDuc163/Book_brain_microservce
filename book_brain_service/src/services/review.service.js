@@ -73,7 +73,10 @@ const getBookReviews = async (bookId, page = 1, limit = 10) => {
         const total = parseInt(countResult.rows[0].total);
 
         return {
-            reviews: reviewsResult.rows,
+            reviews: reviewsResult.rows.map((review) => ({
+                ...review,
+                helpful_count: String(review.helpful_count || 0)
+            })),
             pagination: {
                 total,
                 page,
@@ -104,7 +107,18 @@ const getBookReviewStats = async (bookId) => {
         `;
 
         const result = await pool.query(query, [bookId]);
-        return result.rows[0];
+        const stats = result.rows[0] || {};
+        return {
+            total_reviews: String(stats.total_reviews || 0),
+            average_rating: stats.average_rating === null || stats.average_rating === undefined
+                ? '0.0'
+                : String(stats.average_rating),
+            five_star: String(stats.five_star || 0),
+            four_star: String(stats.four_star || 0),
+            three_star: String(stats.three_star || 0),
+            two_star: String(stats.two_star || 0),
+            one_star: String(stats.one_star || 0)
+        };
     } catch (error) {
         logger.error(`Lỗi khi lấy thống kê đánh giá: ${error.message}`);
         throw error;

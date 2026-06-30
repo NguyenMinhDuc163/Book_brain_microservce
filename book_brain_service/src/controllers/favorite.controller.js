@@ -1,13 +1,13 @@
 const { createResponse } = require('../utils/responseHelper');
 const { logger } = require('../utils/logger');
 const favoriteService = require('../services/favorite.service');
+const { parsePagination } = require('../utils/requestValidation');
 
 // Lấy danh sách sách yêu thích của người dùng hiện tại
 exports.getUserFavorites = async (req, res) => {
     try {
         const userId = req.user.userId;
-        const limit = req.query.limit ? parseInt(req.query.limit) : 10;
-        const page = req.query.page ? parseInt(req.query.page) : 1;
+        const { page, limit } = parsePagination(req.query);
 
         const favorites = await favoriteService.getUserFavorites(userId, page, limit);
 
@@ -20,7 +20,7 @@ exports.getUserFavorites = async (req, res) => {
         }
     } catch (err) {
         logger.error(`Lỗi khi lấy danh sách sách yêu thích: ${err.message}`, { meta: { error: err } });
-        res.status(200).json(createResponse('fail', 'Lỗi khi lấy danh sách sách yêu thích.', 500, [], err.message));
+        res.status(500).json(createResponse('fail', 'Lỗi khi lấy danh sách sách yêu thích.', 500, []));
     }
 };
 
@@ -32,12 +32,12 @@ exports.toggleFavorite = async (req, res) => {
 
         if (!book_id) {
             logger.warn('Thiếu ID sách.');
-            return res.status(200).json(createResponse('fail', 'Vui lòng cung cấp ID sách.', 400, []));
+            return res.status(400).json(createResponse('fail', 'Vui lòng cung cấp ID sách.', 400, []));
         }
 
         if (!action || (action !== 'add' && action !== 'remove')) {
             logger.warn('Thiếu hoặc sai action.');
-            return res.status(200).json(createResponse('fail', 'Vui lòng cung cấp action hợp lệ (add/remove).', 400, []));
+            return res.status(400).json(createResponse('fail', 'Vui lòng cung cấp action hợp lệ (add/remove).', 400, []));
         }
 
         const result = await favoriteService.toggleFavorite(userId, book_id, action);
@@ -53,6 +53,6 @@ exports.toggleFavorite = async (req, res) => {
         }
     } catch (err) {
         logger.error(`Lỗi khi cập nhật trạng thái yêu thích: ${err.message}`, { meta: { request: req.body, error: err } });
-        res.status(200).json(createResponse('fail', 'Lỗi khi cập nhật trạng thái yêu thích.', 500, [], err.message));
+        res.status(500).json(createResponse('fail', 'Lỗi khi cập nhật trạng thái yêu thích.', 500, []));
     }
 };

@@ -1,14 +1,14 @@
 const { createResponse } = require('../utils/responseHelper');
 const { logger } = require('../utils/logger');
 const subscriptionService = require('../services/subscription.service');
+const { parsePagination, parseTemporaryBoolean } = require('../utils/requestValidation');
 
 // Lấy danh sách sách đang theo dõi của người dùng hiện tại
 exports.getUserSubscriptions = async (req, res) => {
     try {
         const userId = req.user.userId;
-        const limit = req.query.limit ? parseInt(req.query.limit) : 10;
-        const page = req.query.page ? parseInt(req.query.page) : 1;
-        const activeOnly = req.query.active_only === 'true';
+        const { page, limit } = parsePagination(req.query);
+        const activeOnly = parseTemporaryBoolean(req.query.active_only, false);
 
         const subscriptions = await subscriptionService.getUserSubscriptions(userId, page, limit, activeOnly);
 
@@ -21,7 +21,7 @@ exports.getUserSubscriptions = async (req, res) => {
         }
     } catch (err) {
         logger.error(`Lỗi khi lấy danh sách sách đang theo dõi: ${err.message}`, { meta: { error: err } });
-        res.status(200).json(createResponse('fail', 'Lỗi khi lấy danh sách sách đang theo dõi.', 500, [], err.message));
+        res.status(500).json(createResponse('fail', 'Lỗi khi lấy danh sách sách đang theo dõi.', 500, []));
     }
 };
 
@@ -33,12 +33,12 @@ exports.toggleSubscription = async (req, res) => {
 
         if (!book_id) {
             logger.warn('Thiếu ID sách.');
-            return res.status(200).json(createResponse('fail', 'Vui lòng cung cấp ID sách.', 400, []));
+            return res.status(400).json(createResponse('fail', 'Vui lòng cung cấp ID sách.', 400, []));
         }
 
         if (!action || (action !== 'subscribe' && action !== 'unsubscribe')) {
             logger.warn('Thiếu hoặc sai action.');
-            return res.status(200).json(createResponse('fail', 'Vui lòng cung cấp action hợp lệ (subscribe/unsubscribe).', 400, []));
+            return res.status(400).json(createResponse('fail', 'Vui lòng cung cấp action hợp lệ (subscribe/unsubscribe).', 400, []));
         }
 
         const result = await subscriptionService.toggleSubscription(userId, book_id, action);
@@ -54,6 +54,6 @@ exports.toggleSubscription = async (req, res) => {
         }
     } catch (err) {
         logger.error(`Lỗi khi cập nhật trạng thái theo dõi: ${err.message}`, { meta: { request: req.body, error: err } });
-        res.status(200).json(createResponse('fail', 'Lỗi khi cập nhật trạng thái theo dõi.', 500, [], err.message));
+        res.status(500).json(createResponse('fail', 'Lỗi khi cập nhật trạng thái theo dõi.', 500, []));
     }
 };

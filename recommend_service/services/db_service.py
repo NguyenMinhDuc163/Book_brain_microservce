@@ -34,6 +34,7 @@ def fetch_user_data():
         b.author_id
     FROM reading_history rh
     JOIN books b ON rh.book_id = b.book_id
+    WHERE b.is_visible = TRUE
     """
     cursor.execute(query)
     reading_data = cursor.fetchall()
@@ -41,10 +42,12 @@ def fetch_user_data():
     # Lấy đánh giá của người dùng
     query = """
     SELECT 
-        user_id, 
-        book_id, 
-        rating
-    FROM book_reviews
+        br.user_id,
+        br.book_id,
+        br.rating
+    FROM book_reviews br
+    JOIN books b ON b.book_id = br.book_id
+    WHERE b.is_visible = TRUE
     """
     cursor.execute(query)
     review_data = cursor.fetchall()
@@ -52,9 +55,11 @@ def fetch_user_data():
     # Lấy sách yêu thích
     query = """
     SELECT 
-        id as user_id, 
-        book_id
-    FROM user_favorites
+        uf.id as user_id,
+        uf.book_id
+    FROM user_favorites uf
+    JOIN books b ON b.book_id = uf.book_id
+    WHERE b.is_visible = TRUE
     """
     cursor.execute(query)
     favorite_data = cursor.fetchall()
@@ -97,6 +102,7 @@ def fetch_book_data():
         br.ranking_score
     FROM books b
     LEFT JOIN book_rankings br ON b.book_id = br.book_id
+    WHERE b.is_visible = TRUE
     """
     cursor.execute(query)
     book_data = cursor.fetchall()
@@ -144,7 +150,7 @@ def get_book_details(book_ids):
     FROM books b
     LEFT JOIN authors a ON b.author_id = a.author_id
     LEFT JOIN categories c ON b.category_id = c.category_id
-    WHERE b.book_id IN ({placeholders})
+    WHERE b.is_visible = TRUE AND b.book_id IN ({placeholders})
     """
 
     cursor.execute(query, book_ids)

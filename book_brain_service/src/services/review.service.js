@@ -6,6 +6,12 @@ const addReview = async (data) => {
     const { book_id, user_id, rating, comment } = data;
 
     try {
+        const visibleBook = await pool.query(
+            'SELECT 1 FROM books WHERE book_id = $1 AND is_visible = TRUE',
+            [book_id]
+        );
+        if (visibleBook.rows.length === 0) throw new Error('Sách không tồn tại.');
+
         // Kiểm tra xem người dùng đã đánh giá sách này chưa
         const checkQuery = `
             SELECT review_id FROM book_reviews 
@@ -53,7 +59,8 @@ const getBookReviews = async (bookId, page = 1, limit = 10) => {
                    (SELECT COUNT(*) FROM review_votes WHERE review_id = br.review_id AND is_helpful = true) as helpful_count
             FROM book_reviews br
             JOIN users u ON br.user_id = u.id
-            WHERE br.book_id = $1
+            JOIN books b ON b.book_id = br.book_id
+            WHERE br.book_id = $1 AND b.is_visible = TRUE
             ORDER BY br.created_at DESC
             LIMIT $2 OFFSET $3
         `;
@@ -61,8 +68,9 @@ const getBookReviews = async (bookId, page = 1, limit = 10) => {
         // Lấy tổng số đánh giá
         const countQuery = `
             SELECT COUNT(*) as total
-            FROM book_reviews
-            WHERE book_id = $1
+            FROM book_reviews br
+            JOIN books b ON b.book_id = br.book_id
+            WHERE br.book_id = $1 AND b.is_visible = TRUE
         `;
 
         const [reviewsResult, countResult] = await Promise.all([
@@ -102,8 +110,9 @@ const getBookReviewStats = async (bookId) => {
                 COUNT(CASE WHEN rating = 3 THEN 1 END) as three_star,
                 COUNT(CASE WHEN rating = 2 THEN 1 END) as two_star,
                 COUNT(CASE WHEN rating = 1 THEN 1 END) as one_star
-            FROM book_reviews
-            WHERE book_id = $1
+            FROM book_reviews br
+            JOIN books b ON b.book_id = br.book_id
+            WHERE br.book_id = $1 AND b.is_visible = TRUE
         `;
 
         const result = await pool.query(query, [bookId]);

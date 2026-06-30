@@ -120,14 +120,16 @@ def get_recommendations():
 
         # Kết hợp điểm đề xuất với thông tin chi tiết
         detail_map = {detail['book_id']: detail for detail in book_details}
+        visible_recommendations = []
         for rec in recommendations:
             detail = detail_map.get(rec['book_id'])
             if detail:
                 rec.update(detail)
+                visible_recommendations.append(rec)
 
         return {
             "code": 200,
-            "data": recommendations,
+            "data": visible_recommendations,
             "status": "success",
             "message": "Danh sách sách hot đã được truy xuất thành công.",
             "error": ""

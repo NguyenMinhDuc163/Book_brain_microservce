@@ -9,6 +9,8 @@ services:
       - .env
     ports:
       - "${GATEWAY_PORT:-4000}:8080"
+      # Compatibility port used by the current Flutter production build.
+      - "${MOBILE_GATEWAY_PORT:-3000}:8080"
     depends_on:
       - book_brain
       - recommend

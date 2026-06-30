@@ -15,6 +15,7 @@ const getUserNotifications = async (userId, page = 1, limit = 10, unreadOnly = f
             LEFT JOIN books b ON n.book_id = b.book_id
             LEFT JOIN chapters c ON n.chapter_id = c.chapter_id
             WHERE n.user_id = $1
+              AND (n.book_id IS NULL OR b.is_visible = TRUE)
         `;
 
         const params = [userId];
@@ -31,12 +32,15 @@ const getUserNotifications = async (userId, page = 1, limit = 10, unreadOnly = f
 
         // Truy vấn tổng số thông báo
         let countQuery = `
-            SELECT COUNT(*) as total FROM notifications 
-            WHERE user_id = $1
+            SELECT COUNT(*) as total
+            FROM notifications n
+            LEFT JOIN books b ON b.book_id = n.book_id
+            WHERE n.user_id = $1
+              AND (n.book_id IS NULL OR b.is_visible = TRUE)
         `;
 
         if (unreadOnly) {
-            countQuery += ` AND is_read = FALSE`;
+            countQuery += ` AND n.is_read = FALSE`;
         }
 
         // Thực hiện truy vấn
@@ -69,6 +73,12 @@ const markAsRead = async (userId, notificationId) => {
             UPDATE notifications
             SET is_read = TRUE
             WHERE notification_id = $1 AND user_id = $2
+              AND (
+                book_id IS NULL OR EXISTS (
+                    SELECT 1 FROM books b
+                    WHERE b.book_id = notifications.book_id AND b.is_visible = TRUE
+                )
+              )
             RETURNING notification_id, book_id, chapter_id, title, message, is_read, created_at
         `;
 
@@ -135,6 +145,23 @@ const deleteAllNotifications = async (userId) => {
 // Thêm thông báo mới
 const addNotification = async (userId, bookId, chapterId, title, message) => {
     try {
+        const visibleBook = await pool.query(
+            'SELECT 1 FROM books WHERE book_id = $1 AND is_visible = TRUE',
+            [bookId]
+        );
+        if (visibleBook.rows.length === 0) throw new Error('Sách không tồn tại.');
+
+        if (chapterId) {
+            const visibleChapter = await pool.query(
+                `SELECT 1
+                 FROM chapters c
+                 JOIN books b ON b.book_id = c.book_id
+                 WHERE c.chapter_id = $1 AND c.book_id = $2 AND b.is_visible = TRUE`,
+                [chapterId, bookId]
+            );
+            if (visibleChapter.rows.length === 0) throw new Error('Chương không tồn tại.');
+        }
+
         const query = `
             INSERT INTO notifications (user_id, book_id, chapter_id, title, message)
             VALUES ($1, $2, $3, $4, $5)

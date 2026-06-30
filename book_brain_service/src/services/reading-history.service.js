@@ -52,7 +52,7 @@ const getBooksByStatus = async (userId, status = null, page = 1, limit = 10) => 
 
                      LEFT JOIN categories c ON b.category_id = c.category_id
 
-            WHERE rh.user_id = $1
+            WHERE rh.user_id = $1 AND b.is_visible = TRUE
 
         `;
 
@@ -85,14 +85,15 @@ const getBooksByStatus = async (userId, status = null, page = 1, limit = 10) => 
         // Truy vấn tổng số sách
         let countQuery = `
             SELECT COUNT(*) as total
-            FROM reading_history
-            WHERE user_id = $1
+            FROM reading_history rh
+            JOIN books b ON b.book_id = rh.book_id
+            WHERE rh.user_id = $1 AND b.is_visible = TRUE
         `;
 
         const countParams = [userId];
 
         if (status) {
-            countQuery += ` AND reading_status = $2`;
+            countQuery += ` AND rh.reading_status = $2`;
             countParams.push(status);
         }
 
@@ -128,9 +129,23 @@ const updateReadingStatus = async (userId, bookId, readingStatus, completionRate
 
         // Bỏ qua việc kiểm tra chapter_id có hợp lệ không
         // Chỉ kiểm tra sách có tồn tại không
-        const bookCheck = await client.query('SELECT book_id FROM books WHERE book_id = $1', [bookId]);
+        const bookCheck = await client.query(
+            'SELECT book_id FROM books WHERE book_id = $1 AND is_visible = TRUE',
+            [bookId]
+        );
         if (bookCheck.rows.length === 0) {
             throw new Error('Sách không tồn tại.');
+        }
+
+        if (currentChapterId !== null) {
+            const chapterCheck = await client.query(
+                `SELECT 1
+                 FROM chapters c
+                 JOIN books b ON b.book_id = c.book_id
+                 WHERE c.chapter_id = $1 AND c.book_id = $2 AND b.is_visible = TRUE`,
+                [currentChapterId, bookId]
+            );
+            if (chapterCheck.rows.length === 0) throw new Error('Chương không tồn tại.');
         }
 
         // Tăng lượt xem của sách

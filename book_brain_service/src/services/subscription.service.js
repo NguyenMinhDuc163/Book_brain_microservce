@@ -16,7 +16,7 @@ const getUserSubscriptions = async (userId, page = 1, limit = 10, activeOnly = f
                      JOIN books b ON bs.book_id = b.book_id
                      LEFT JOIN authors a ON b.author_id = a.author_id
                      LEFT JOIN categories c ON b.category_id = c.category_id
-            WHERE bs.user_id = $1
+            WHERE bs.user_id = $1 AND b.is_visible = TRUE
         `;
 
         const queryParams = [userId];
@@ -35,12 +35,13 @@ const getUserSubscriptions = async (userId, page = 1, limit = 10, activeOnly = f
         // Truy vấn lấy tổng số sách đang theo dõi
         let countQuery = `
             SELECT COUNT(*) as total
-            FROM book_subscriptions
-            WHERE user_id = $1
+            FROM book_subscriptions bs
+            JOIN books b ON b.book_id = bs.book_id
+            WHERE bs.user_id = $1 AND b.is_visible = TRUE
         `;
 
         if (activeOnly) {
-            countQuery += ` AND is_active = true`;
+            countQuery += ` AND bs.is_active = true`;
         }
 
         const [booksResult, countResult] = await Promise.all([
@@ -70,7 +71,7 @@ const getUserSubscriptions = async (userId, page = 1, limit = 10, activeOnly = f
 const toggleSubscription = async (userId, bookId, action) => {
     try {
         // Kiểm tra xem sách có tồn tại không
-        const bookCheckQuery = `SELECT book_id FROM books WHERE book_id = $1`;
+        const bookCheckQuery = `SELECT book_id FROM books WHERE book_id = $1 AND is_visible = TRUE`;
         const bookCheckResult = await pool.query(bookCheckQuery, [bookId]);
 
         if (bookCheckResult.rows.length === 0) {

@@ -16,6 +16,7 @@ const getBookRankings = async (limit = 10) => {
                      JOIN books b ON brv.book_id = b.book_id
                      LEFT JOIN authors a ON b.author_id = a.author_id
                      LEFT JOIN categories c ON b.category_id = c.category_id
+            WHERE b.is_visible = TRUE
             ORDER BY brv.overall_rank
                 LIMIT $1
         `;

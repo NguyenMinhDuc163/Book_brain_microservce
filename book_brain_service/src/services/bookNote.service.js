@@ -3,6 +3,27 @@ const db = require('../configs/db.config');
 class BookNoteService {
     async createNote(userId, noteData) {
         try {
+            const visibleBook = await db.query(
+                'SELECT 1 FROM books WHERE book_id = $1 AND is_visible = TRUE',
+                [noteData.bookId]
+            );
+            if (visibleBook.rows.length === 0) {
+                throw new Error('Sách không tồn tại.');
+            }
+
+            if (noteData.chapterId) {
+                const visibleChapter = await db.query(
+                    `SELECT 1
+                     FROM chapters c
+                     JOIN books b ON b.book_id = c.book_id
+                     WHERE c.chapter_id = $1 AND c.book_id = $2 AND b.is_visible = TRUE`,
+                    [noteData.chapterId, noteData.bookId]
+                );
+                if (visibleChapter.rows.length === 0) {
+                    throw new Error('Chương không tồn tại.');
+                }
+            }
+
             const query = `
                 INSERT INTO book_notes 
                 (user_id, book_id, chapter_id, selected_text, note_content, start_position, end_position)
@@ -40,32 +61,33 @@ class BookNoteService {
         try {
             let query = `
                 SELECT 
-                    note_id,
-                    book_id,
-                    chapter_id,
-                    selected_text,
-                    note_content,
-                    start_position,
-                    end_position
-                FROM book_notes
-                WHERE user_id = $1
+                    bn.note_id,
+                    bn.book_id,
+                    bn.chapter_id,
+                    bn.selected_text,
+                    bn.note_content,
+                    bn.start_position,
+                    bn.end_position
+                FROM book_notes bn
+                JOIN books b ON b.book_id = bn.book_id
+                WHERE bn.user_id = $1 AND b.is_visible = TRUE
             `;
             
             const values = [userId];
             let paramIndex = 2;
 
             if (bookId) {
-                query += ` AND book_id = $${paramIndex}`;
+                query += ` AND bn.book_id = $${paramIndex}`;
                 values.push(bookId);
                 paramIndex++;
             }
             
             if (chapterId) {
-                query += ` AND chapter_id = $${paramIndex}`;
+                query += ` AND bn.chapter_id = $${paramIndex}`;
                 values.push(chapterId);
             }
 
-            query += ` ORDER BY created_at DESC`;
+            query += ` ORDER BY bn.created_at DESC`;
 
             const result = await db.query(query, values);
 
@@ -107,4 +129,4 @@ class BookNoteService {
     }
 }
 
-module.exports = new BookNoteService(); 
+module.exports = new BookNoteService();

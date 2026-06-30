@@ -8,7 +8,7 @@ const getBooks = async (filters = {}) => {
         FROM books b
         LEFT JOIN authors a ON b.author_id = a.author_id
         LEFT JOIN categories c ON b.category_id = c.category_id
-        WHERE 1=1
+        WHERE b.is_visible = TRUE
     `;
     const values = [];
     let paramCount = 1;
@@ -57,10 +57,12 @@ const searchBooks = async (keyword, limit = 20, offset = 0) => {
         FROM books b
                  JOIN authors a ON b.author_id = a.author_id
                  JOIN categories c ON b.category_id = c.category_id
-        WHERE
+        WHERE b.is_visible = TRUE
+          AND (
             unaccent(lower(b.title)) LIKE unaccent(lower($1)) OR
             unaccent(lower(a.name)) LIKE unaccent(lower($1)) OR
             unaccent(lower(c.name)) LIKE unaccent(lower($1))
+          )
         ORDER BY b.views DESC, b.created_at DESC
         LIMIT $2 OFFSET $3;
     `;
@@ -84,6 +86,7 @@ const getTrendingBooks = async (limit = 10) => {
         FROM books b
         LEFT JOIN authors a ON b.author_id = a.author_id
         LEFT JOIN categories c ON b.category_id = c.category_id
+        WHERE b.is_visible = TRUE
         ORDER BY b.views DESC
         LIMIT $1
     `;
@@ -95,10 +98,11 @@ const getTrendingBooks = async (limit = 10) => {
 
 const getChaptersByBookId = async (bookId) => {
     const query = `
-        SELECT chapter_id, book_id, title, url, chapter_order, created_at, updated_at
-        FROM chapters
-        WHERE book_id = $1
-        ORDER BY chapter_order ASC
+        SELECT c.chapter_id, c.book_id, c.title, c.url, c.chapter_order, c.created_at, c.updated_at
+        FROM chapters c
+        JOIN books b ON b.book_id = c.book_id
+        WHERE c.book_id = $1 AND b.is_visible = TRUE
+        ORDER BY c.chapter_order ASC
     `;
     const values = [bookId];
 
@@ -117,7 +121,7 @@ const getBookDetail = async (bookId, chapterOrder = null, userId = null) => {
         FROM books b
                  LEFT JOIN authors a ON b.author_id = a.author_id
                  LEFT JOIN categories c ON b.category_id = c.category_id
-        WHERE b.book_id = $1
+        WHERE b.book_id = $1 AND b.is_visible = TRUE
     `;
     const bookResult = await pool.query(bookQuery, [bookId]);
     const book = bookResult.rows[0];

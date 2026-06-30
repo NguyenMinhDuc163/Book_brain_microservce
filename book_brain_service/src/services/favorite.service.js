@@ -16,7 +16,7 @@ const getUserFavorites = async (userId, page = 1, limit = 10) => {
                      JOIN books b ON uf.book_id = b.book_id
                      LEFT JOIN authors a ON b.author_id = a.author_id
                      LEFT JOIN categories c ON b.category_id = c.category_id
-            WHERE uf.id = $1
+            WHERE uf.id = $1 AND b.is_visible = TRUE
             ORDER BY uf.added_at DESC
                 LIMIT $2 OFFSET $3
         `;
@@ -24,8 +24,9 @@ const getUserFavorites = async (userId, page = 1, limit = 10) => {
         // Truy vấn lấy tổng số sách yêu thích
         const countQuery = `
             SELECT COUNT(*) as total
-            FROM user_favorites
-            WHERE id = $1
+            FROM user_favorites uf
+            JOIN books b ON b.book_id = uf.book_id
+            WHERE uf.id = $1 AND b.is_visible = TRUE
         `;
 
         const [booksResult, countResult] = await Promise.all([
@@ -54,7 +55,7 @@ const getUserFavorites = async (userId, page = 1, limit = 10) => {
 const toggleFavorite = async (userId, bookId, action) => {
     try {
         // Kiểm tra xem sách có tồn tại không
-        const bookCheckQuery = `SELECT book_id FROM books WHERE book_id = $1`;
+        const bookCheckQuery = `SELECT book_id FROM books WHERE book_id = $1 AND is_visible = TRUE`;
         const bookCheckResult = await pool.query(bookCheckQuery, [bookId]);
 
         if (bookCheckResult.rows.length === 0) {
